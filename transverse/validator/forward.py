@@ -57,7 +57,8 @@ async def forward(self):
             train_batch = next(self.train_iter_operator)
             print('### self.train_iter.iter() worked')
         except:
-            train_batch = self.train_iter.iter
+            self.train_iter_operator = iter(self.train_iter)
+            train_batch = next(self.train_iter_operator)
             print('### self.train_iter.iter worked')
 
         # TODO: Adjust extract_embeddings function call
