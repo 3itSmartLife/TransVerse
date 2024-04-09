@@ -90,7 +90,17 @@ async def forward(self):
         if len(gradients) > 0:
             # TODO: Average gradients
             bt.logging.info('Averaging gradients ...')
-            avg_grads = [bt.Tensor.serialize(grad) for grad in gradients[0]]
+            accum_grads = []
+            for i in range(len(gradients[0])):
+                accum_grads.append([grad[i] for grad in gradients])
+            avg_grads = [torch.stack(grads).mean(dim=0) for grads in accum_grads]
+            try:
+                print(avg_grads[0].shape)
+            except:
+                print(avg_grads[0].shape())
+
+            torch.save(avg_grads, 'grads.dump')
+            avg_grads = [bt.Tensor.serialize(grad) for grad in avg_grads]
             # TODO: Propagate averaged gradients to miners
             bt.logging.info(f'Sending gradients to miners to update the model')
             responses = await self.dendrite(
