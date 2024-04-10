@@ -22,7 +22,7 @@ from typing import List
 import bittensor as bt
 import math
 
-def reward(avg_grads: List[torch.Tensor], response: List[bt.Tensor]) -> float:
+def reward(avg_grads: List[bt.Tensor], response: List[bt.Tensor]) -> float:
     """
     Reward the miner response to the dummy request. This method returns a reward
     value for the miner, which is used to update the miner's score.
@@ -36,14 +36,14 @@ def reward(avg_grads: List[torch.Tensor], response: List[bt.Tensor]) -> float:
     else:
         dist = 1e-10
         for i, grad in enumerate(avg_grads):
-            dist += torch.norm(grad - bt.Tensor.deserialize(response[i]).to(grad.get_device()), dim=0).mean()
+            dist += torch.norm(bt.Tensor.deserialize(grad) - bt.Tensor.deserialize(response[i]), dim=0).mean()
         return math.log(1.0 / dist)
 
 
 def get_rewards(
     self,
     responses: List[bt.Tensor],
-    avg_grads: List[torch.Tensor]
+    avg_grads: List[bt.Tensor]
 ) -> torch.FloatTensor:
     """
     Returns a tensor of rewards for the given query and responses.

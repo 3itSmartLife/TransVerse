@@ -96,10 +96,12 @@ class Miner(BaseMinerNeuron):
         """
         # TODO(developer): Replace with actual implementation logic.
         bt.logging.info('### Received train batches ###')
+        stime = time.time()
         train_batch = synapse.train_batch
         train_batch['caption_embs'] = [bt.Tensor.deserialize(emb) for emb in synapse.train_emb_batch]
         gradients = self.agent.compute_grad(train_batch)
         synapse.gradients = [bt.Tensor.serialize(grad) for grad in gradients]
+        bt.logging.info(f'Calculated gradients in {time.time() - stime}s')
 
         return synapse
 
