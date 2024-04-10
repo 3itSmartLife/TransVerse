@@ -101,11 +101,11 @@ class DeepSpeedAgent:
         with torch.no_grad():
             for param, grad in zip(self.model.parameters(), gradients):
                 if param.requires_grad:
-                    print('### BEFORE UPDATES ###')
-                    print(param)
+                    # print('### BEFORE UPDATES ###')
+                    # print(param)
                     param.data.sub_(grad * self.ds_params['optimizer']['params']['lr'])
-                    print('### AFTER UPDATES ###')
-                    print(param)
+                    # print('### AFTER UPDATES ###')
+                    # print(param)
         self.optimizer.zero_grad()
 
 

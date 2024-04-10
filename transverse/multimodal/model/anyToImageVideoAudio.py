@@ -50,7 +50,7 @@ class TransVerseModel(nn.Module):
         super(TransVerseModel, self).__init__()
         self.args = args
 
-        print('### TransVerse CONFIG ###')
+        print('######################## TransVerse CONFIG ########################')
         print(self.args)
 
         self.max_length = args['model_config']['max_length']

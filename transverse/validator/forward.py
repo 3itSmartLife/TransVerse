@@ -43,92 +43,86 @@ async def forward(self):
     # Implement random selection of two modes
     self.config.request_mode = 'compute'
 
-    # TODO: Define validation mechanism
-    if self.config.request_mode == 'compute':
-        # TODO: Aggregate the gradients and update the model
-        pass
+    # Select random miners
+    miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
 
-        miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
+    # Select training batch randomly and extract embeddings
+    # TODO: Adjust random_batch function call
+    try:
+        train_batch = next(self.train_iter_operator)
+    except:
+        self.train_iter_operator = iter(self.train_iter)
+        train_batch = next(self.train_iter_operator)
+    # TODO: Add embedding extraction mechanism if needed
 
-        # TODO: Adjust random_batch function call
-        # Select training batch randomly and extract embeddings
-        # training_batch = random_batch(self.config)
-        try:
-            train_batch = next(self.train_iter_operator)
-        except:
-            self.train_iter_operator = iter(self.train_iter)
-            train_batch = next(self.train_iter_operator)
+    # Parse train_batch to miners through synapse
+    train_emb_batch = train_batch.pop('caption_embs')
+    train_emb_batch = [bt.Tensor.serialize(emb) for emb in train_emb_batch]
+    # TODO: Remove the log
+    bt.logging.info(f'Training batch: {train_batch}')
 
-        # TODO: Adjust extract_embeddings function call
-        # Extract embeddings from the random batch
-        # embeddings_batch = extract_embeddings(training_batch)
-        # Mock training batch to the miner
-        # embeddings_batch = [bt.Tensor.serialize(torch.ones(77, 768, dtype=torch.float).to('cpu'))]
-        train_emb_batch = train_batch.pop('caption_embs')
-        train_emb_batch = [bt.Tensor.serialize(emb) for emb in train_emb_batch]
-        bt.logging.info(f'Training batch: {train_batch}')
+    bt.logging.info(f'Sending challenges to miners: {miner_uids}')
+    # The dendrite client queries the network.
+    responses = await self.dendrite(
+        # Send the query to selected miner axons in the network.
+        axons=[self.metagraph.axons[uid] for uid in miner_uids],
+        synapse=DistributedTraining(train_batch=train_batch, train_emb_batch=train_emb_batch),
+        # All responses have the deserialize function called on them before returning.
+        # You are encouraged to define your own deserialization function.
+        deserialize=True,
+        timeout=self.config.neuron.timeout
+    )
 
-        bt.logging.info(f'Sending challenges to miners: {miner_uids}')
-        # The dendrite client queries the network.
-        responses = await self.dendrite(
-            # Send the query to selected miner axons in the network.
-            axons=[self.metagraph.axons[uid] for uid in miner_uids],
-            synapse=DistributedTraining(train_batch=train_batch, train_emb_batch=train_emb_batch),
-            # All responses have the deserialize function called on them before returning.
-            # You are encouraged to define your own deserialization function.
-            deserialize=True,
-            timeout=self.config.neuron.timeout
-        )
+    bt.logging.info(f"Received gradients from miners")
+    gradients = []
+    for response in responses:
+        if response:
+            gradients.append([bt.Tensor.deserialize(grad).to(self.device) for grad in response])
 
-        # Log the results for monitoring purposes.
-        bt.logging.info(f"Received gradients from miners")
-        gradients = []
-        for response in responses:
-            if response:
-                gradients.append([bt.Tensor.deserialize(grad) for grad in response])
+    if len(gradients) > 0:
+        # TODO: Average gradients
+        bt.logging.info('Averaging gradients ...')
+        accum_grads = []
+        for i in range(len(gradients[0])):
+            accum_grads.append([grad[i] for grad in gradients])
+        avg_grads = [torch.stack(grads).mean(dim=0) for grads in accum_grads]
 
-        if len(gradients) > 0:
-            # TODO: Average gradients
-            bt.logging.info('Averaging gradients ...')
-            accum_grads = []
-            for i in range(len(gradients[0])):
-                accum_grads.append([grad[i] for grad in gradients])
-            avg_grads = [torch.stack(grads).mean(dim=0) for grads in accum_grads]
-            try:
-                print(avg_grads[0].shape)
-            except:
-                print(avg_grads[0].shape())
+        # Check avg_grads size through dump file
+        # torch.save(avg_grads, 'grads.dump')
 
-            torch.save(avg_grads, 'grads.dump')
-            avg_grads = [bt.Tensor.serialize(grad) for grad in avg_grads]
-            # TODO: Propagate averaged gradients to miners
-            bt.logging.info(f'Sending gradients to miners to update the model')
-            responses = await self.dendrite(
-                # Send the query to selected miner axons in the network.
-                axons=[self.metagraph.axons[uid] for uid in miner_uids],
-                # Construct a dummy query. This simply contains a single integer.
-                synapse=UpdateModel(avg_gradients=avg_grads),
-                # All responses have the deserialize function called on them before returning.
-                # You are encouraged to define your own deserialization function.
-                deserialize=True,
-                timeout=self.config.neuron.timeout
-            )
+        # if self.config.request_mode == 'compute':
+        #     # TODO: Aggregate the gradients and update the model
 
-            if True in responses:
-                bt.logging.info('Miner models successfully updated')
-            else:
-                bt.logging.info('Miner models update failed')
+        #     # Serialize torch.Tensor to bittensor Tensor
+        #     avg_grads = [bt.Tensor.serialize(grad) for grad in avg_grads]
+        #     # TODO: Propagate averaged gradients to miners
+        #     bt.logging.info(f'Sending gradients to miners to update the model')
+        #     update_responses = await self.dendrite(
+        #         # Send the query to selected miner axons in the network.
+        #         axons=[self.metagraph.axons[uid] for uid in miner_uids],
+        #         # Construct a dummy query. This simply contains a single integer.
+        #         synapse=UpdateModel(avg_gradients=avg_grads),
+        #         # All responses have the deserialize function called on them before returning.
+        #         # You are encouraged to define your own deserialization function.
+        #         deserialize=True,
+        #         timeout=self.config.neuron.timeout
+        #     )
+
+        #     if True in update_responses:
+        #         bt.logging.info('Miner models successfully updated')
+        #     else:
+        #         bt.logging.info('Miner models update failed')
 
 
-    elif self.config.requst_mode == 'validate':
-        # TODO: Calculate gradients on the validator side
-        pass
+        # elif self.config.request_mode == 'validate':
+        #     # TODO: Calculate gradients on the validator side
+        #     pass
 
-    # TODO(developer): Define how the validator scores responses.
-    # Adjust the scores based on responses from miners.
-    # rewards = get_rewards(self, query=self.step, responses=responses).to(self.device)
+        # TODO(developer): Define how the validator scores responses.
+        # Adjust the scores based on responses from miners.
+        rewards = get_rewards(self, responses=responses, avg_grads=avg_grads).to(self.device)
 
-    # bt.logging.info(f"Scored responses: {rewards}")
-    # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
-    # miner_uids = miner_uids.to(self.device)
-    # self.update_scores(rewards, miner_uids)
+        bt.logging.info(f"Scored responses: {rewards}")
+        # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
+        miner_uids = miner_uids.to(self.device)
+        self.update_scores(rewards, miner_uids)
