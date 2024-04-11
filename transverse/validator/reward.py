@@ -31,19 +31,21 @@ def reward(avg_grads: List[bt.Tensor], response: List[bt.Tensor]) -> float:
     - float: The reward value for the miner.
     """
     # TODO: Implement rewarding mechanism here
-    if response == None:
+    if response == None or avg_grads == None:
         return 0
     else:
         dist = 1e-10
         for i, grad in enumerate(avg_grads):
-            dist += torch.norm(bt.Tensor.deserialize(grad) - bt.Tensor.deserialize(response[i]), dim=0).mean()
-        return math.log(1.0 / dist)
+            dist += torch.norm(grad - bt.Tensor.deserialize(response[i]).to(grad.device), dim=0).mean()
+        dist /= len(avg_grads)
+        print(f'### DIST ### : {dist}')
+        return math.log(1.0 / dist + 1)
 
 
 def get_rewards(
     self,
     responses: List[bt.Tensor],
-    avg_grads: List[bt.Tensor]
+    avg_grads: List[torch.Tensor]
 ) -> torch.FloatTensor:
     """
     Returns a tensor of rewards for the given query and responses.
@@ -56,6 +58,8 @@ def get_rewards(
     - torch.FloatTensor: A tensor of rewards for the given query and responses.
     """
     # Get all the reward results by iteratively calling your reward() function.
-    return torch.FloatTensor(
+    scores = torch.FloatTensor(
         [reward(avg_grads, response) for response in responses]
     ).to(self.device)
+    
+    return scores / torch.max(scores)
