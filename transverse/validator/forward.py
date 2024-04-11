@@ -20,6 +20,7 @@
 import bittensor as bt
 import torch
 import time
+import random
 
 from transverse.protocol import DistributedTraining, UpdateModel
 from transverse.validator.reward import get_rewards
@@ -41,7 +42,10 @@ async def forward(self):
 
     # TODO: Check the request mode
     # Implement random selection of two modes
-    self.config.request_mode = 'compute'
+    if random.random() < self.config.neuron.compute_request_rate:
+        self.config.request_mode = 'compute'
+    else:
+        self.config.request_mode = 'validate'
 
     # Select random miners
     miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
@@ -80,6 +84,8 @@ async def forward(self):
         if response:
             gradients.append([bt.Tensor.deserialize(grad).to(self.device) for grad in response])
 
+    avg_grads = None
+
     if len(gradients) > 0:
         # TODO: Average gradients
         bt.logging.info('Averaging gradients ...')
@@ -87,7 +93,7 @@ async def forward(self):
         accum_grads = []
         for i in range(len(gradients[0])):
             accum_grads.append([grad[i] for grad in gradients])
-        avg_grads = [torch.stack(grads).mean(dim=0) for grads in accum_grads]
+        avg_grads = [torch.stack(grads).mean(dim=0).to(self.device) for grads in accum_grads]
         bt.logging.info(f'Averaged gradients in {time.time() - stime}s')
 
         # Check avg_grads size through dump file
@@ -97,7 +103,7 @@ async def forward(self):
             # TODO: Aggregate the gradients and update the model
 
             # Serialize torch.Tensor to bittensor Tensor
-            avg_grads = [bt.Tensor.serialize(grad) for grad in avg_grads]
+            avg_grads_bt = [bt.Tensor.serialize(grad) for grad in avg_grads]
             # TODO: Propagate averaged gradients to miners
             bt.logging.info(f'Sending gradients to miners to update the model')
             stime = time.time()
@@ -105,7 +111,7 @@ async def forward(self):
                 # Send the query to selected miner axons in the network.
                 axons=[self.metagraph.axons[uid] for uid in miner_uids],
                 # Construct a dummy query. This simply contains a single integer.
-                synapse=UpdateModel(avg_gradients=avg_grads),
+                synapse=UpdateModel(avg_gradients=avg_grads_bt),
                 # All responses have the deserialize function called on them before returning.
                 # You are encouraged to define your own deserialization function.
                 deserialize=True,
@@ -122,13 +128,13 @@ async def forward(self):
             # TODO: Calculate gradients on the validator side
             pass
 
-        # TODO(developer): Define how the validator scores responses.
-        # Adjust the scores based on responses from miners.
-        stime = time.time()
-        rewards = get_rewards(self, responses=responses, avg_grads=avg_grads).to(self.device)
-        bt.logging.info(f'Calculated scores in {time.time() - stime}s')
+    # TODO(developer): Define how the validator scores responses.
+    # Adjust the scores based on responses from miners.
+    stime = time.time()
+    rewards = get_rewards(self, responses=responses, avg_grads=avg_grads).to(self.device)
+    bt.logging.info(f'Calculated scores in {time.time() - stime}s')
 
-        bt.logging.info(f"Scored responses: {rewards}")
-        # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
-        miner_uids = miner_uids.to(self.device)
-        self.update_scores(rewards, miner_uids)
+    bt.logging.info(f"Scored responses: {rewards}")
+    # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
+    miner_uids = miner_uids.to(self.device)
+    self.update_scores(rewards, miner_uids)

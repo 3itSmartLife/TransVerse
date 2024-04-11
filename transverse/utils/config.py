@@ -20,7 +20,7 @@ import os
 import torch
 import argparse
 import bittensor as bt
-from loguru import logger
+from logging import logger
 
 
 def check_config(cls, config: "bt.Config"):
@@ -263,6 +263,12 @@ def add_validator_args(cls, parser):
         default="opentensor-dev",
     )
 
+    parser.add_argument(
+        "--neuron.compute_request_rate",
+        type=float,
+        help="Rate of compute request besides validate request to miners on the validator side",
+        default=0.0,
+    )
 
 def config(cls):
     """
