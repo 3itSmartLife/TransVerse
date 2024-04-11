@@ -63,6 +63,7 @@ async def forward(self):
 
     bt.logging.info(f'Sending challenges to miners: {miner_uids}')
     # The dendrite client queries the network.
+    stime = time.time()
     responses = await self.dendrite(
         # Send the query to selected miner axons in the network.
         axons=[self.metagraph.axons[uid] for uid in miner_uids],
@@ -73,7 +74,7 @@ async def forward(self):
         timeout=self.config.neuron.timeout
     )
 
-    bt.logging.info(f"Received gradients from miners")
+    bt.logging.info(f"Received gradients from miners in {time.time() - stime}s")
     gradients = []
     for response in responses:
         if response:
@@ -82,45 +83,50 @@ async def forward(self):
     if len(gradients) > 0:
         # TODO: Average gradients
         bt.logging.info('Averaging gradients ...')
+        stime = time.time()
         accum_grads = []
         for i in range(len(gradients[0])):
             accum_grads.append([grad[i] for grad in gradients])
         avg_grads = [torch.stack(grads).mean(dim=0) for grads in accum_grads]
+        bt.logging.info(f'Averaged gradients in {time.time() - stime}s')
 
         # Check avg_grads size through dump file
         # torch.save(avg_grads, 'grads.dump')
 
-        # if self.config.request_mode == 'compute':
-        #     # TODO: Aggregate the gradients and update the model
+        if self.config.request_mode == 'compute':
+            # TODO: Aggregate the gradients and update the model
 
-        #     # Serialize torch.Tensor to bittensor Tensor
-        #     avg_grads = [bt.Tensor.serialize(grad) for grad in avg_grads]
-        #     # TODO: Propagate averaged gradients to miners
-        #     bt.logging.info(f'Sending gradients to miners to update the model')
-        #     update_responses = await self.dendrite(
-        #         # Send the query to selected miner axons in the network.
-        #         axons=[self.metagraph.axons[uid] for uid in miner_uids],
-        #         # Construct a dummy query. This simply contains a single integer.
-        #         synapse=UpdateModel(avg_gradients=avg_grads),
-        #         # All responses have the deserialize function called on them before returning.
-        #         # You are encouraged to define your own deserialization function.
-        #         deserialize=True,
-        #         timeout=self.config.neuron.timeout
-        #     )
+            # Serialize torch.Tensor to bittensor Tensor
+            avg_grads = [bt.Tensor.serialize(grad) for grad in avg_grads]
+            # TODO: Propagate averaged gradients to miners
+            bt.logging.info(f'Sending gradients to miners to update the model')
+            stime = time.time()
+            update_responses = await self.dendrite(
+                # Send the query to selected miner axons in the network.
+                axons=[self.metagraph.axons[uid] for uid in miner_uids],
+                # Construct a dummy query. This simply contains a single integer.
+                synapse=UpdateModel(avg_gradients=avg_grads),
+                # All responses have the deserialize function called on them before returning.
+                # You are encouraged to define your own deserialization function.
+                deserialize=True,
+                timeout=self.config.neuron.timeout
+            )
 
-        #     if True in update_responses:
-        #         bt.logging.info('Miner models successfully updated')
-        #     else:
-        #         bt.logging.info('Miner models update failed')
+            if True in update_responses:
+                bt.logging.info(f'Miner models successfully updated in {time.time() - stime}s')
+            else:
+                bt.logging.info('Miner models update failed')
 
 
-        # elif self.config.request_mode == 'validate':
-        #     # TODO: Calculate gradients on the validator side
-        #     pass
+        elif self.config.request_mode == 'validate':
+            # TODO: Calculate gradients on the validator side
+            pass
 
         # TODO(developer): Define how the validator scores responses.
         # Adjust the scores based on responses from miners.
+        stime = time.time()
         rewards = get_rewards(self, responses=responses, avg_grads=avg_grads).to(self.device)
+        bt.logging.info(f'Calculated scores in {time.time() - stime}s')
 
         bt.logging.info(f"Scored responses: {rewards}")
         # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
