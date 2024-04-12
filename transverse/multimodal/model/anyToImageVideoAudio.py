@@ -115,6 +115,11 @@ class TransVerseModel(nn.Module):
                 param.requires_grad = False
 
         self.input_embeddings = self.llama_model.get_input_embeddings()
+        for name, params in self.input_embeddings.named_parameters():
+            params.requires_grad = False
+        
+        for name, params in self.llama_model.lm_head.named_parameters():
+            params.requires_grad = False
 
         # the alignment module for LLM-TO-IMAGE
         self.sd_ckpt_path = self.args['model_config']['image_diffusion']
@@ -124,13 +129,13 @@ class TransVerseModel(nn.Module):
                 in_dim = self.llama_model.config.hidden_size
 
                 self.gen_text_hidden_fcs.append(
-                    TextFcLayer(in_dim, 768, num_input_tokens=self.args['model_config']['num_gen_img_tokens'],
+                    TextFcLayer(in_dim, 96, num_input_tokens=self.args['model_config']['num_gen_img_tokens'],
                                 num_output_tokens=self.args['model_config']['num_clip_tokens'],
                                 mode=self.args['model_config']['text_fc_to_img_mode']))
             # self.sd_pipe.text_encoder.config.hidden_size
             elif layer_idx < self.llama_model.config.num_hidden_layers:
                 self.gen_text_hidden_fcs.append(
-                    TextFcLayer(self.llama_model.config.hidden_size, 768,
+                    TextFcLayer(self.llama_model.config.hidden_size, 96,
                                 num_input_tokens=self.args['model_config']['num_gen_img_tokens'],
                                 num_output_tokens=self.args['model_config']['num_clip_tokens'],
                                 mode=self.args['model_config']['text_fc_to_img_mode']))
@@ -146,13 +151,13 @@ class TransVerseModel(nn.Module):
                 in_dim = self.llama_model.config.hidden_size  # 4096
 
                 self.gen_text_hidden_fcs_video.append(
-                    TextFcLayer(in_dim, 1024, num_input_tokens=self.args['model_config']['num_gen_video_tokens'],
+                    TextFcLayer(in_dim, 128, num_input_tokens=self.args['model_config']['num_gen_video_tokens'],
                                 num_output_tokens=self.args['model_config']['num_clip_tokens'],
                                 mode=self.args['model_config']['text_fc_to_video_mode']))
             # self.vd_pipe.text_encoder.config.hidden_size
             elif layer_idx < self.llama_model.config.num_hidden_layers:
                 self.gen_text_hidden_fcs_video.append(
-                    TextFcLayer(self.llama_model.config.hidden_size, 1024,
+                    TextFcLayer(self.llama_model.config.hidden_size, 128,
                                 num_input_tokens=self.args['model_config']['num_gen_video_tokens'],
                                 num_output_tokens=self.args['model_config']['num_clip_tokens'],
                                 mode=self.args['model_config']['text_fc_to_video_mode']))
@@ -168,14 +173,14 @@ class TransVerseModel(nn.Module):
                 in_dim = self.llama_model.config.hidden_size
 
                 self.gen_text_hidden_fcs_audio.append(
-                    TextFcLayer(in_dim, 512,
+                    TextFcLayer(in_dim, 64,
                                 num_input_tokens=self.args['model_config']['num_gen_audio_tokens'],
                                 num_output_tokens=1,
                                 mode=self.args['model_config']['text_fc_to_audio_mode']))
             # self.ad_pipe.text_encoder.config.projection_dim
             elif layer_idx < self.llama_model.config.num_hidden_layers:
                 self.gen_text_hidden_fcs_audio.append(
-                    TextFcLayer(self.llama_model.config.hidden_size, 512,
+                    TextFcLayer(self.llama_model.config.hidden_size, 64,
                                 num_input_tokens=self.args['model_config']['num_gen_audio_tokens'],
                                 num_output_tokens=1,
                                 mode=self.args['model_config']['text_fc_to_audio_mode']))
