@@ -80,7 +80,7 @@ class Validator(BaseValidatorNeuron):
         # TODO: Sync with trained model (Can be done in version 2)
         self.model = TransVerseModel(**self.config)
         self.agent = DeepSpeedAgent(self.model, self.config)
-        self.embed_model = EmbeddingModel(self.config)
+        # self.embed_model = EmbeddingModel(self.config)
 
         # self.grad_accumulates = []
         # self.avg_grads = bt.Tensor()
@@ -102,6 +102,21 @@ class Validator(BaseValidatorNeuron):
 # The main function parses the configuration and runs the validator.
 if __name__ == "__main__":
     with Validator() as validator:
+        bt.logging.info("Running validator on subnet %d"%validator.config.netuid)
         while True:
-            bt.logging.info("Validator running...", time.time())
+            last_block = 0
+            if validator.block % 5 == 0 and validator.block > last_block:
+                log = (
+                    f"Block: {validator.block} | " +
+                    "Stake:%.02f | "%(validator.metagraph.S[validator.uid]) +
+                    "Rank:%.03f | "%validator.metagraph.R[validator.uid] +
+                    "Trust:%.03f | "%validator.metagraph.Tv[validator.uid] +
+                    "Consensus:%.03f | "%validator.metagraph.C[validator.uid] +
+                    "Incentive:%.03f | "%validator.metagraph.I[validator.uid] +
+                    "Emission:%.03f"%validator.metagraph.E[validator.uid]
+                )
+                bt.logging.info(log)
+            last_block = validator.block
+
+            # bt.logging.info("Validator running...", time.time())
             time.sleep(5)
