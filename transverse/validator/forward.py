@@ -84,7 +84,6 @@ async def forward(self):
         if response:
             gradients.append([bt.Tensor.deserialize(grad).to(self.device) for grad in response])
     
-    print(gradients)
     avg_grads = None
 
     if len(gradients) > 0:

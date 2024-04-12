@@ -330,6 +330,6 @@ if __name__ == "__main__":
                     "Emission:%.04f"%miner.metagraph.E[miner.uid]
                 )
                 bt.logging.info(log)
-                last_block = miner.block
+            last_block = miner.block
             # bt.logging.info("Miner running...", time.time())
             time.sleep(5)
