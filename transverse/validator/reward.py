@@ -38,7 +38,6 @@ def reward(avg_grads: List[bt.Tensor], response: List[bt.Tensor]) -> float:
         for i, grad in enumerate(avg_grads):
             dist += torch.norm(grad - bt.Tensor.deserialize(response[i]).to(grad.device), dim=0).mean()
         dist /= len(avg_grads)
-        print(f'### DIST ### : {dist}')
         return math.log(1.0 / dist + 1)
 
 
@@ -62,4 +61,4 @@ def get_rewards(
         [reward(avg_grads, response) for response in responses]
     ).to(self.device)
     
-    return scores / torch.max(scores)
+    return scores / (torch.max(scores) + 1e-10)
