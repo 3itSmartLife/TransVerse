@@ -103,8 +103,8 @@ class Validator(BaseValidatorNeuron):
 if __name__ == "__main__":
     with Validator() as validator:
         bt.logging.info("Running validator on subnet %d"%validator.config.netuid)
+        last_block = 0
         while True:
-            last_block = 0
             if validator.block % 5 == 0 and validator.block > last_block:
                 log = (
                     f"Block: {validator.block} | " +
@@ -116,7 +116,7 @@ if __name__ == "__main__":
                     "Emission:%.03f"%validator.metagraph.E[validator.uid]
                 )
                 bt.logging.info(log)
-            last_block = validator.block
+                last_block = validator.block
 
             # bt.logging.info("Validator running...", time.time())
             time.sleep(5)
