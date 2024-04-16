@@ -115,6 +115,11 @@ class TransVerseModel(nn.Module):
                 param.requires_grad = False
 
         self.input_embeddings = self.llama_model.get_input_embeddings()
+        for name, params in self.input_embeddings.named_parameters():
+            params.requires_grad = False
+        
+        for name, params in self.llama_model.lm_head.named_parameters():
+            params.requires_grad = False
 
         # the alignment module for LLM-TO-IMAGE
         self.sd_ckpt_path = self.args['model_config']['image_diffusion']

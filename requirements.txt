@@ -1,6 +1,5 @@
 bittensor
 openai
-bitsandbytes
 tiktoken
 sentencepiece
 accelerate==0.19.0
@@ -34,3 +33,4 @@ tqdm==4.65.0
 transformers==4.29.2
 omegaconf==2.3.0
 tensorboard==2.13.0
+loguru

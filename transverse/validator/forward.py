@@ -24,7 +24,7 @@ import random
 
 from transverse.protocol import DistributedTraining, UpdateModel
 from transverse.validator.reward import get_rewards
-from transverse.utils.uids import get_random_uids
+from transverse.utils.uids import get_random_uids, get_miner_uids
 # from transverse.validator.dataset import random_batch, extract_embeddings
 
 async def forward(self):
@@ -83,7 +83,7 @@ async def forward(self):
     for response in responses:
         if response:
             gradients.append([bt.Tensor.deserialize(grad).to(self.device) for grad in response])
-
+    
     avg_grads = None
 
     if len(gradients) > 0:
@@ -100,8 +100,9 @@ async def forward(self):
         # torch.save(avg_grads, 'grads.dump')
 
         if self.config.request_mode == 'compute':
-            # TODO: Aggregate the gradients and update the model
+            miner_uids = get_miner_uids(self)
 
+            # TODO: Aggregate the gradients and update the model
             # Serialize torch.Tensor to bittensor Tensor
             avg_grads_bt = [bt.Tensor.serialize(grad) for grad in avg_grads]
             # TODO: Propagate averaged gradients to miners

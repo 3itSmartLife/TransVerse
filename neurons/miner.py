@@ -316,6 +316,20 @@ class Miner(BaseMinerNeuron):
 # This is the main function, which runs the miner.
 if __name__ == "__main__":
     with Miner() as miner:
+        bt.logging.info("Running miner on subnet %d"%miner.config.netuid)
         while True:
-            bt.logging.info("Miner running...", time.time())
+            last_block = 0
+            if miner.block % 5 == 0 and miner.block > last_block:
+                log = (
+                    f"Block: {miner.block} | " +
+                    "Stake:%.02f | "%(miner.metagraph.S[miner.uid]) +
+                    "Rank:%.04f | "%miner.metagraph.R[miner.uid] +
+                    "Trust:%.04f | "%miner.metagraph.T[miner.uid] +
+                    "Consensus:%.04f | "%miner.metagraph.C[miner.uid] +
+                    "Incentive:%.04f | "%miner.metagraph.I[miner.uid] +
+                    "Emission:%.04f"%miner.metagraph.E[miner.uid]
+                )
+                bt.logging.info(log)
+            last_block = miner.block
+            # bt.logging.info("Miner running...", time.time())
             time.sleep(5)

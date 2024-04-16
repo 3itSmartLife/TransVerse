@@ -15,6 +15,7 @@ from collections import OrderedDict
 import json
 import logging
 from torch.utils.tensorboard import SummaryWriter
+import bittensor as bt
 
 # from transverse.multimodal.header import *
 
@@ -70,7 +71,7 @@ class DeepSpeedAgent:
         self.optimizer.zero_grad()
         
         # Print loss and accuracy
-        print(f'Training Step: {current_step}, Loss: {loss.item()}, Accuracy: {mle_acc}')
+        bt.logging.info(f'Training Step: {current_step}, Loss: {loss.item()}, Accuracy: {mle_acc}')
 
         self.writer.add_scalar('loss', loss, current_step)
         self.writer.add_scalar('mle_acc', mle_acc, current_step)
@@ -177,6 +178,7 @@ class DeepSpeedAgent:
 
             all_param += num_params
             if param.requires_grad:
+                print(f'###TRAINABLE PARAMS### {name} - {num_params}')
                 trainable_params += num_params
         if use_4bit:
             trainable_params /= 2

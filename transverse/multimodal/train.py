@@ -6,11 +6,11 @@ from config import *
 
 def parser_args():
     parser = argparse.ArgumentParser(description='train parameters')
-    parser.add_argument('--model', type=str, default='nextgpt')
+    parser.add_argument('--model', type=str, default='transverse')
     parser.add_argument('--mode', type=str, default='train', help='train or test or validation')
     parser.add_argument('--local_rank', default=0, type=int)
-    parser.add_argument('--save_path', type=str, default='../ckpt/delta_ckpt/nextgpt/7b_tiva_v0/')
-    parser.add_argument('--log_path', type=str, default='../ckpt/delta_ckpt/nextgpt/7b_tiva_v0/log/')
+    parser.add_argument('--save_path', type=str, default='../ckpt/delta_ckpt/transverse/7b_tiva_v0/')
+    parser.add_argument('--log_path', type=str, default='../ckpt/delta_ckpt/transverse/7b_tiva_v0/log/')
     parser.add_argument('--assets_path', type=str, default='./assets/')
 
     # model configurations
