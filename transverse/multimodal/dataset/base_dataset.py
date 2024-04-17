@@ -66,12 +66,9 @@ class BaseDataset(Dataset):
         )
 
     def load_from_hf(self, url):
-        print(url)
         response = requests.get(url)
         
         if response.status_code == 200:
-            print('##### DATA LOADING SUCCESS #####')
             return torch.tensor(np.load(io.BytesIO(response.content)))
         else:
-            print('##### DATA LOADING FAILED #####')
             return None
