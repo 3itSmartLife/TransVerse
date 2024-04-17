@@ -21,7 +21,9 @@ from torch.utils.data import Dataset
 from tqdm import tqdm
 import pandas as pd
 from .utils import process_caption
-
+from datasets import load_dataset
+import requests
+import io
 
 class BaseDataset(Dataset):
     """Dataset for supervised fine-tuning."""
@@ -31,6 +33,7 @@ class BaseDataset(Dataset):
         self.embed_path = embed_path
         self.mm_path_list, self.caption_list = [], []
         self.dataset_type_list = []
+        self.dataset_name = '3it/testdata'
 
     def __len__(self):  # number of instances
         return len(self.mm_path_list)
@@ -39,11 +42,17 @@ class BaseDataset(Dataset):
         ############################################################
         ############### TODO:  HF DOWNLOAD IMPLEMENT ###############
         ############################################################
-        with open(os.path.join(self.embed_path, str(os.path.basename(self.mm_path_list[i])) + '.npy'), 'rb') as f:
-            caption_embs = torch.from_numpy(np.load(f, allow_pickle=True))  # (num_clip_tokens, 768)
-
-        return dict(mm_paths=self.mm_path_list[i], output_texts=self.caption_list[i], caption_embs=caption_embs,
-                    dataset_types=self.dataset_type_list[i])
+        # with open(os.path.join(self.embed_path, str(os.path.basename(self.mm_path_list[i])) + '.npy'), 'rb') as f:
+            # caption_embs = torch.from_numpy(np.load(f, allow_pickle=True))  # (num_clip_tokens, 768)
+            # caption_embs = self.base_dataset[str(os.path.basename(self.mm_path_list[i])) + '.npy'].load_to_mem()
+        caption_embs = self.load_from_hf(
+            'https://huggingface.co/datasets/' + self.dataset_name + '/resolve/main/embed/' + str(os.path.basename(self.mm_path_list[i])) + '.npy'
+            )
+        if caption_embs != None:
+            return dict(mm_paths=self.mm_path_list[i], output_texts=self.caption_list[i], caption_embs=caption_embs,
+                        dataset_types=self.dataset_type_list[i])
+        else:
+            return
 
     def collate(self, instances):
         mm_paths, output_texts, caption_embs, dataset_types = tuple(
@@ -56,3 +65,10 @@ class BaseDataset(Dataset):
             dataset_types=dataset_types
         )
 
+    def load_from_hf(self, url):
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            return torch.tensor(np.load(io.BytesIO(response.content)))
+        else:
+            return None
