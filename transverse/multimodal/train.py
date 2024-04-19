@@ -58,7 +58,6 @@ def build_directory(path):
 
 def main(**args):
     config_env(args)
-    print(args)
     args['ds_config_path'] = f'dsconfig/stage_{args["stage"]}.json'
     dschf = HfDeepSpeedConfig(args['ds_config_path'])
     args['dschf'] = dschf

@@ -15,8 +15,6 @@ class MyConcatDataset(Dataset):
 
             target = dataset_dict['target']
             params = dataset_dict['params']
-            print(target)
-            print(params)
             dataset = instantiate_from_config(dict(target=target, params=params))
 
             _datasets.append(dataset)

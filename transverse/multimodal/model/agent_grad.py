@@ -178,7 +178,6 @@ class DeepSpeedAgent:
 
             all_param += num_params
             if param.requires_grad:
-                print(f'###TRAINABLE PARAMS### {name} - {num_params}')
                 trainable_params += num_params
         if use_4bit:
             trainable_params /= 2

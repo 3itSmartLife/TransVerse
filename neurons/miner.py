@@ -64,7 +64,10 @@ class Miner(BaseMinerNeuron):
         # TODO: Sync with trained model (Can be done in version 2)
         self.model = TransVerseModel(**self.config)
         self.agent = DeepSpeedAgent(self.model, self.config)
-        
+        delta_ckpt = torch.load('ckpt/delta_ckpt/7b_tiva_v0/pytorch_model.pt', map_location=torch.device('cpu'))
+        bt.logging.info('Loaded the pretrained checkpoint')
+        self.model.load_state_dict(delta_ckpt, strict=False)
+
         # TODO: Attach determiners which functions are called when receiving a request
         self.axon = bt.axon(wallet=self.wallet, port=self.config.axon.port)
         bt.logging.info(f"Attaching forwards functions to miner axon.")

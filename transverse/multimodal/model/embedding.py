@@ -7,7 +7,7 @@ from tqdm import tqdm
 import torch
 import json
 import pandas as pd
-import argparse
+import bittensor as bt
 import torch
 
 # Load a slightly modified version of the Stable Diffusion pipeline.
@@ -50,7 +50,7 @@ def save_to_path(emb, path):
         with open(path, 'wb') as wf:
             np.save(wf, emb)
     except:
-        print("Error with", path)
+        bt.logging.error("Error with", path)
     return path
 
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     caption_list = []
     name_list = []
     if modality == 'audio':
-        print('extract audio caption embedding')
+        bt.logging.info('Extract audio caption embedding')
         with open(data_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
@@ -95,11 +95,11 @@ if __name__ == '__main__':
                 name_list.append(one_audio_name)
         pipe = AudioLDMPipeline.from_pretrained(ckpt_path, torch_dtype=dtype)
         if not torch.cuda.is_available():
-            print('WARNING: using CPU, this will be slow!')
+            bt.logging.warning('WARNING: using CPU, this will be slow!')
         else:
             pipe = pipe.to("cuda")
     elif modality == 'image':
-        print('extract image caption embedding')
+        bt.logging.info('Extract image caption embedding')
         with open(data_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         for row in tqdm(data, total=len(data)):
@@ -109,11 +109,11 @@ if __name__ == '__main__':
                 name_list.append(one_image_name)
         pipe = StableDiffusionPipeline.from_pretrained(ckpt_path, torch_dtype=dtype)
         if not torch.cuda.is_available():
-            print('WARNING: using CPU, this will be slow!')
+            bt.logging.warning('WARNING: using CPU, this will be slow!')
         else:
             pipe = pipe.to("cuda")
     elif modality == 'video':
-        print('extract video caption embedding')
+        bt.logging.info('Extract video caption embedding')
         with open(data_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         for row in tqdm(data, total=len(data)):
@@ -123,11 +123,11 @@ if __name__ == '__main__':
                 name_list.append(one_video_name)
         pipe = TextToVideoSDPipeline.from_pretrained(ckpt_path, torch_dtype=dtype)
         if not torch.cuda.is_available():
-            print('WARNING: using CPU, this will be slow!')
+            bt.logging.warning('WARNING: using CPU, this will be slow!')
         else:
             pipe = pipe.to("cuda")
 
-    print('Extract embeddings in batches.')
+    bt.logging.info('Extract embeddings in batches.')
     num_batches = int(np.ceil(len(caption_list) / batch_size))
     for i in tqdm(range(num_batches)):
         start_idx = i * batch_size

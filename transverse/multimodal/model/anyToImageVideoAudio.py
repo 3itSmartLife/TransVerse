@@ -20,7 +20,8 @@ import os
 import re
 from transformers import LlamaTokenizer, LlamaForCausalLM, LlamaConfig
 from peft import LoraConfig, TaskType, get_peft_model
-
+import bittensor as bt
+from huggingface_hub import PyTorchModelHubMixin
 
 class StoppingCriteriaSub(StoppingCriteria):
 
@@ -43,43 +44,44 @@ class StoppingCriteriaSub(StoppingCriteria):
         return False
 
 
-class TransVerseModel(nn.Module):
+class TransVerseModel(nn.Module, PyTorchModelHubMixin):
     """LoRA for LLaMa model"""
 
     def __init__(self, **args):
         super(TransVerseModel, self).__init__()
         self.args = args
 
-        print('######################## TransVerse CONFIG ########################')
-        print(self.args)
+        # print('################################################ TransVerse CONFIG ################################################')
+        # print(self.args)
+        # print('################################################ TransVerse CONFIG ################################################')
 
         self.max_length = args['model_config']['max_length']
         self.device = torch.cuda.current_device()
         self.stage = args['stage']
-        print('args max_length', args['model_config']['max_length'])
+        # print('args max_length', args['model_config']['max_length'])
 
         imagebind_ckpt_path = os.path.join(self.args['model_config']['pretrained_ckpt_path'], 'imagebind_ckpt',
                                            self.args['model_config']['imagebind_version'])
-        print(f'Initializing visual encoder from {imagebind_ckpt_path} ...')
+        bt.logging.info(f'Initializing visual encoder from {imagebind_ckpt_path} ...')
         self.visual_encoder, self.visual_hidden_size = \
             imagebind_model.imagebind_huge(pretrained=True, store_path=imagebind_ckpt_path)
         # free vision encoder
         for name, param in self.visual_encoder.named_parameters():
             param.requires_grad = False
         self.visual_encoder.eval()
-        print('Visual encoder initialized.')
+        bt.logging.info('Visual encoder initialized.')
 
         self.base_model = args['model_config']['base_model']
-        print(f'Initializing language decoder from {self.base_model} ...')
+        bt.logging.info(f'Initializing language decoder from {self.base_model} ...')
 
         self.llama_model = LlamaForCausalLM.from_pretrained(self.base_model)
         if self.args['model_config'].get('freeze_lm'):
-            print("Freezing the LLaMa ...")
+            bt.logging.info("Freezing the LLM ...")
             for param in self.llama_model.parameters():
                 param.requires_grad = False
             self.llama_model.eval()
         else:
-            print("Instruct tuning the LLaMa ...")
+            bt.logging.info("Instruct tuning the LLM ...")
             # add the lora module
             peft_config = LoraConfig(
                 task_type=TaskType.CAUSAL_LM,
@@ -92,11 +94,11 @@ class TransVerseModel(nn.Module):
 
             self.llama_model = get_peft_model(self.llama_model, peft_config)
             self.llama_model.print_trainable_parameters()
-        print('Language decoder initialized.')
+        bt.logging.info('Language decoder initialized.')
 
         # use the new trained tokenizer
         tokenizer_path = self.base_model
-        print(f'Initializing tokenizer from {tokenizer_path} ...')
+        bt.logging.info(f'Initializing tokenizer from {tokenizer_path} ...')
         self.llama_tokenizer = LlamaTokenizer.from_pretrained(tokenizer_path, use_fast=False)
         self.llama_tokenizer.pad_token = self.llama_tokenizer.eos_token
         self.llama_tokenizer.padding_side = "right"
@@ -105,7 +107,7 @@ class TransVerseModel(nn.Module):
         self._add_video_token()
         self._add_audio_token()
         self.llama_model.resize_token_embeddings(len(self.llama_tokenizer))
-        print('Tokenizer initialized.')
+        bt.logging.info('Tokenizer initialized.')
 
         self.llama_proj = nn.Linear(
             self.visual_hidden_size, self.llama_model.config.hidden_size
@@ -204,12 +206,12 @@ class TransVerseModel(nn.Module):
         # Add [IMG] tokens to the vocabulary.
         self.args['model_config']['gen_img_token_idx'] = []
         for i in range(self.args['model_config']['num_gen_img_tokens']):
-            print(f'Adding [IMG{i}] token to vocabulary.')
-            print(f'Before adding new token, tokenizer("[IMG{i}]") =',
-                  self.llama_tokenizer(f'[IMG{i}]', add_special_tokens=False))
+            # print(f'Adding [IMG{i}] token to vocabulary.')
+            # print(f'Before adding new token, tokenizer("[IMG{i}]") =',
+            #       self.llama_tokenizer(f'[IMG{i}]', add_special_tokens=False))
             num_added_tokens = self.llama_tokenizer.add_tokens(f'[IMG{i}]')
-            print(f'After adding {num_added_tokens} new tokens, tokenizer("[IMG{i}]") =',
-                  self.llama_tokenizer(f'[IMG{i}]', add_special_tokens=False))
+            # print(f'After adding {num_added_tokens} new tokens, tokenizer("[IMG{i}]") =',
+            #       self.llama_tokenizer(f'[IMG{i}]', add_special_tokens=False))
             gen_token_idx = self.llama_tokenizer(f'[IMG{i}]', add_special_tokens=False).input_ids
             assert len(gen_token_idx) == 1, gen_token_idx
             self.args['model_config']['gen_img_token_idx'].append(gen_token_idx[0])
@@ -221,12 +223,12 @@ class TransVerseModel(nn.Module):
         # Add [VID] tokens to the vocabulary.
         self.args['model_config']['gen_video_token_idx'] = []
         for i in range(self.args['model_config']['num_gen_video_tokens']):
-            print(f'Adding [VID{i}] token to vocabulary.')
-            print(f'Before adding new token, tokenizer("[VID{i}]") =',
-                  self.llama_tokenizer(f'[VID{i}]', add_special_tokens=False))
+            # print(f'Adding [VID{i}] token to vocabulary.')
+            # print(f'Before adding new token, tokenizer("[VID{i}]") =',
+                #   self.llama_tokenizer(f'[VID{i}]', add_special_tokens=False))
             num_added_tokens = self.llama_tokenizer.add_tokens(f'[VID{i}]')
-            print(f'After adding {num_added_tokens} new tokens, tokenizer("[VID{i}]") =',
-                  self.llama_tokenizer(f'[VID{i}]', add_special_tokens=False))
+            # print(f'After adding {num_added_tokens} new tokens, tokenizer("[VID{i}]") =',
+                #   self.llama_tokenizer(f'[VID{i}]', add_special_tokens=False))
             gen_token_idx = self.llama_tokenizer(f'[VID{i}]', add_special_tokens=False).input_ids
             assert len(gen_token_idx) == 1, gen_token_idx
             self.args['model_config']['gen_video_token_idx'].append(gen_token_idx[0])
@@ -238,12 +240,12 @@ class TransVerseModel(nn.Module):
         # Add [AUD] tokens to the vocabulary.
         self.args['model_config']['gen_audio_token_idx'] = []
         for i in range(self.args['model_config']['num_gen_audio_tokens']):
-            print(f'Adding [AUD{i}] token to vocabulary.')
-            print(f'Before adding new token, tokenizer("[AUD{i}]") =',
-                  self.llama_tokenizer(f'[AUD{i}]', add_special_tokens=False))
+            # print(f'Adding [AUD{i}] token to vocabulary.')
+            # print(f'Before adding new token, tokenizer("[AUD{i}]") =',
+            #       self.llama_tokenizer(f'[AUD{i}]', add_special_tokens=False))
             num_added_tokens = self.llama_tokenizer.add_tokens(f'[AUD{i}]')
-            print(f'After adding {num_added_tokens} new tokens, tokenizer("[AUD{i}]") =',
-                  self.llama_tokenizer(f'[AUD{i}]', add_special_tokens=False))
+            # print(f'After adding {num_added_tokens} new tokens, tokenizer("[AUD{i}]") =',
+            #       self.llama_tokenizer(f'[AUD{i}]', add_special_tokens=False))
             gen_token_idx = self.llama_tokenizer(f'[AUD{i}]', add_special_tokens=False).input_ids
             assert len(gen_token_idx) == 1, gen_token_idx
             self.args['model_config']['gen_audio_token_idx'].append(gen_token_idx[0])
@@ -369,7 +371,6 @@ class TransVerseModel(nn.Module):
         :param stage: the training stage
         :param
         """
-        print('###DEBUG### Stage: %d'%stage)
         if stage == 2:
             input_ids, target_ids, attention_mask = process_batch_stage_2(self.llama_tokenizer, texts,
                                                                           self.max_length,
@@ -468,7 +469,6 @@ class TransVerseModel(nn.Module):
                                                                       inputs['output_texts'],
                                                                       self.max_length,
                                                                       self.args['model_config']['prompt'])
-        # print(input_ids)
         inputs_embeds, targets, attention_mask = self.prompt_wrap(mm_embeds, input_ids, target_ids, attention_mask)
         outputs = self.llama_model(
             inputs_embeds=inputs_embeds,
