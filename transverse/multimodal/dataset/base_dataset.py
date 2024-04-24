@@ -28,12 +28,12 @@ import io
 class BaseDataset(Dataset):
     """Dataset for supervised fine-tuning."""
 
-    def __init__(self, data_path: str, mm_root_path: str, embed_path: str, dataset_type: str):
+    def __init__(self, data_path: str, mm_root_path: str, embed_path: str, dataset_type: str, train_stage=1):
         super(BaseDataset, self).__init__()
         self.embed_path = embed_path
         self.mm_path_list, self.caption_list = [], []
         self.dataset_type_list = []
-        self.dataset_name = '3it/testdata'
+        self.train_stage = train_stage
 
     def __len__(self):  # number of instances
         return len(self.mm_path_list)
@@ -42,17 +42,14 @@ class BaseDataset(Dataset):
         ############################################################
         ############### TODO:  HF DOWNLOAD IMPLEMENT ###############
         ############################################################
-        # with open(os.path.join(self.embed_path, str(os.path.basename(self.mm_path_list[i])) + '.npy'), 'rb') as f:
-            # caption_embs = torch.from_numpy(np.load(f, allow_pickle=True))  # (num_clip_tokens, 768)
-            # caption_embs = self.base_dataset[str(os.path.basename(self.mm_path_list[i])) + '.npy'].load_to_mem()
-        caption_embs = self.load_from_hf(
-            'https://huggingface.co/datasets/' + self.dataset_name + '/resolve/main/embed/' + str(os.path.basename(self.mm_path_list[i])) + '.npy'
-            )
-        if caption_embs != None:
-            return dict(mm_paths=self.mm_path_list[i], output_texts=self.caption_list[i], caption_embs=caption_embs,
-                        dataset_types=self.dataset_type_list[i])
+        if self.train_stage == 1:
+            caption_embs = torch.ones(1,1, dtype=torch.float)
         else:
-            return
+            with open(os.path.join(self.embed_path, str(os.path.basename(self.mm_path_list[i])) + '.npy'), 'rb') as f:
+                caption_embs = torch.from_numpy(np.load(f, allow_pickle=True))  # (num_clip_tokens, 768)
+
+        return dict(mm_paths=self.mm_path_list[i], output_texts=self.caption_list[i], caption_embs=caption_embs,
+                    dataset_types=self.dataset_type_list[i])
 
     def collate(self, instances):
         mm_paths, output_texts, caption_embs, dataset_types = tuple(
