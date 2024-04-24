@@ -21,7 +21,9 @@ from torch.utils.data import Dataset
 from tqdm import tqdm
 import pandas as pd
 from .utils import process_caption
-
+from datasets import load_dataset
+import requests
+import io
 
 class BaseDataset(Dataset):
     """Dataset for supervised fine-tuning."""
@@ -31,6 +33,7 @@ class BaseDataset(Dataset):
         self.embed_path = embed_path
         self.mm_path_list, self.caption_list = [], []
         self.dataset_type_list = []
+        feat/bug-fix-on-testnet
         self.train_stage = train_stage
 
     def __len__(self):  # number of instances
@@ -40,6 +43,7 @@ class BaseDataset(Dataset):
         ############################################################
         ############### TODO:  HF DOWNLOAD IMPLEMENT ###############
         ############################################################
+        feat/bug-fix-on-testnet
         if self.train_stage == 1:
             caption_embs = torch.ones(1,1, dtype=torch.float)
         else:
@@ -60,3 +64,10 @@ class BaseDataset(Dataset):
             dataset_types=dataset_types
         )
 
+    def load_from_hf(self, url):
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            return torch.tensor(np.load(io.BytesIO(response.content)))
+        else:
+            return None

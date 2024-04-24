@@ -52,11 +52,12 @@ async def forward(self):
 
     # Select training batch randomly and extract embeddings
     # TODO: Adjust random_batch function call
-    try:
-        train_batch = next(self.train_iter_operator)
-    except:
-        self.train_iter_operator = iter(self.train_iter)
-        train_batch = next(self.train_iter_operator)
+    while True:
+        try:
+            train_batch = next(self.train_iter_operator)
+            break
+        except:
+            self.train_iter_operator = iter(self.train_iter)
     # TODO: Add embedding extraction mechanism if needed
 
     # Parse train_batch to miners through synapse
