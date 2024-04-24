@@ -33,7 +33,6 @@ class BaseDataset(Dataset):
         self.embed_path = embed_path
         self.mm_path_list, self.caption_list = [], []
         self.dataset_type_list = []
-        feat/bug-fix-on-testnet
         self.train_stage = train_stage
 
     def __len__(self):  # number of instances
@@ -43,7 +42,6 @@ class BaseDataset(Dataset):
         ############################################################
         ############### TODO:  HF DOWNLOAD IMPLEMENT ###############
         ############################################################
-        feat/bug-fix-on-testnet
         if self.train_stage == 1:
             caption_embs = torch.ones(1,1, dtype=torch.float)
         else:
