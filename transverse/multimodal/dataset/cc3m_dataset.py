@@ -31,7 +31,7 @@ class CC3MDataset(BaseDataset):
         super(CC3MDataset, self).__init__(data_path, mm_root_path, embed_path, dataset_type)
         self.embed_path = embed_path
 
-        print('Load CC3M dataset ...')
+        print('Loading Image dataset ...')
         self.mm_path_list, self.caption_list = [], []
         with open(data_path, 'r', encoding='utf-8') as f:
             data = json.load(f)

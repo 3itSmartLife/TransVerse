@@ -17,6 +17,7 @@ import inspect
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import torch
+import bittensor as bt
 
 from packaging import version
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
@@ -266,11 +267,11 @@ class StableDiffusionPipeline(DiffusionPipeline):
             if truncate_side == 'left':
                 # Truncate from the left.
                 if untruncated_ids.shape[-1] > self.tokenizer.model_max_length:
-                    print('Original prompt:', prompt)
+                    bt.logging.debug('Original prompt:', prompt)
                     prompt = self.tokenizer.batch_decode(
                         untruncated_ids[:, -1 - self.tokenizer.model_max_length: -1]
                     )
-                    print('Trunc prompt:', prompt)
+                    bt.logging.debug('Trunc prompt:', prompt)
 
             text_inputs = self.tokenizer(
                 prompt,

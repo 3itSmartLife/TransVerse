@@ -79,12 +79,11 @@ class Validator(BaseValidatorNeuron):
         # TODO: Load the transverse model 
         # TODO: Sync with trained model (Can be done in version 2)
         self.model = TransVerseModel(**self.config)
+        delta_ckpt = torch.load('ckpt/pretrained_ckpt/7b_tiva_v0/pytorch_model.pt', map_location=torch.device('cpu'))
+        self.model.load_state_dict(delta_ckpt, strict=False)
+        bt.logging.info('Loaded the pretrained checkpoint successfully')
         self.agent = DeepSpeedAgent(self.model, self.config)
         # self.embed_model = EmbeddingModel(self.config)
-
-        # self.grad_accumulates = []
-        # self.avg_grads = bt.Tensor()
-
 
     async def forward(self):
         """

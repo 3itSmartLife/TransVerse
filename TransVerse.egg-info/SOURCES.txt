@@ -39,7 +39,6 @@ transverse/multimodal/dataset/utils.py
 transverse/multimodal/dataset/webvid_dataset.py
 transverse/multimodal/model/__init__.py
 transverse/multimodal/model/agent.py
-transverse/multimodal/model/agent_grad.py
 transverse/multimodal/model/anyToImageVideoAudio.py
 transverse/multimodal/model/blip2.py
 transverse/multimodal/model/custom_ad.py

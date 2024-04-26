@@ -51,15 +51,13 @@ class TransVerseModel(nn.Module, PyTorchModelHubMixin):
         super(TransVerseModel, self).__init__()
         self.args = args
 
-        # print('################################################ TransVerse CONFIG ################################################')
-        # print(self.args)
-        # print('################################################ TransVerse CONFIG ################################################')
+        # bt.logging.debug('################################################ TransVerse CONFIG ################################################')
+        # bt.logging.debug(self.args)
+        # bt.logging.debug('################################################ TransVerse CONFIG ################################################')
 
         self.max_length = args['model_config']['max_length']
         self.device = torch.cuda.current_device()
         self.stage = args['stage']
-        # print('args max_length', args['model_config']['max_length'])
-
         imagebind_ckpt_path = os.path.join(self.args['model_config']['pretrained_ckpt_path'], 'imagebind_ckpt',
                                            self.args['model_config']['imagebind_version'])
         bt.logging.info(f'Initializing visual encoder from {imagebind_ckpt_path} ...')
@@ -624,10 +622,10 @@ class TransVerseModel(nn.Module, PyTorchModelHubMixin):
             p_after_embeds = self.llama_model.model.model.embed_tokens(p_after_token.input_ids).expand(batch_size, -1,
                                                                                                        -1)  # bsz x s2 x embed_dim
         for m in matches:
-            print('image path: ', m)
+            bt.logging.debug('image path: ', m)
             if m.startswith('temp'):
                 m = os.path.join('./', m)
-                print('image path: ', m)
+                bt.logging.debug('image path: ', m)
             _temp_embedding, _ = self.encode_image([m])
             features.append(_temp_embedding)
         feature_embeds = torch.cat(features).sum(dim=0).unsqueeze(0)
@@ -650,10 +648,10 @@ class TransVerseModel(nn.Module, PyTorchModelHubMixin):
             p_after_embeds = self.llama_model.model.model.embed_tokens(p_after_token.input_ids).expand(batch_size, -1,
                                                                                                        -1)  # bsz x s2 x embed_dim
         for m in matches:
-            print('Video path: ', m)
+            bt.logging.debug('Video path: ', m)
             if m.startswith('temp'):
                 m = os.path.join('./', m)
-                print('Video path: ', m)
+                bt.logging.debug('Video path: ', m)
             _temp_embedding, _ = self.encode_video([m])
             features.append(_temp_embedding)
         feature_embeds = torch.cat(features).sum(dim=0).unsqueeze(0)
@@ -676,10 +674,10 @@ class TransVerseModel(nn.Module, PyTorchModelHubMixin):
             p_after_embeds = self.llama_model.model.model.embed_tokens(p_after_token.input_ids).expand(batch_size, -1,
                                                                                                        -1)  # bsz x s2 x embed_dim
         for m in matches:
-            print('Audio path: ', m)
+            bt.logging.debug('Audio path: ', m)
             if m.startswith('temp'):
                 m = os.path.join('./', m)
-                print('Video path: ', m)
+                bt.logging.debug('Video path: ', m)
             _temp_embedding, _ = self.encode_audio([m])
             features.append(_temp_embedding)
         feature_embeds = torch.cat(features).sum(dim=0).unsqueeze(0)
@@ -688,7 +686,7 @@ class TransVerseModel(nn.Module, PyTorchModelHubMixin):
     def prepare_generation_embedding(self, inputs):
         prompt = inputs['prompt']
         text = prompt + '\n### Assistant:'
-        print("text prompt: ", text)
+        bt.logging.debug("text prompt: ", text)
         batch_size = 1
         input_embeds = []
         split_text = re.split(r' <|> ', text)
@@ -839,14 +837,14 @@ class TransVerseModel(nn.Module, PyTorchModelHubMixin):
             gen_emb = self.gen_text_hidden_fcs_video[-1](raw_emb, gen_prefix_embs)  # (1, 77, 768)
 
             if gen_emb.shape[1] != 77:
-                print(f"Padding {gen_emb.shape} with zeros")
+                bt.logging.debug(f"Padding {gen_emb.shape} with zeros")
                 bs = gen_emb.shape[0]
                 clip_emb = 768
                 gen_emb = gen_emb.reshape(bs, -1, clip_emb)  # (bs, T_I_V_A.txt, 768)
                 seq_len = gen_emb.shape[1]
                 gen_emb = torch.cat([gen_emb, torch.zeros((bs, 77 - seq_len, clip_emb), device=gen_emb.device,
                                                           dtype=gen_emb.dtype)], dim=1)
-                print('Padded to', gen_emb.shape)
+                bt.logging.debug('Padded to', gen_emb.shape)
 
             video_outputs = generation_model(prompt_embeds=gen_emb,
                                              guidance_scale=guidance_scale,
@@ -963,17 +961,17 @@ class TransVerseModel(nn.Module, PyTorchModelHubMixin):
         # Find up to max_num_rets [IMG] tokens, and their corresponding scores.
         all_gen_img_idx = [i for i, x in enumerate(generated_ids[0, :] == self.args['model_config']['gen_img_token_idx'][0]) if x][
                           :inputs['max_num_imgs']]
-        print('all_gen_img_idx: ', all_gen_img_idx)
+        bt.logging.debug('all_gen_img_idx: ', all_gen_img_idx)
 
         # Find up to max_num_rest [VID] tokens, and their corresponding scores.
         all_gen_vid_idx = [i for i, x in enumerate(generated_ids[0, :] == self.args['model_config']['gen_video_token_idx'][0]) if x][
                           :inputs['max_num_vids']]
-        print('all_gen_vid_idx: ', all_gen_vid_idx)
+        bt.logging.debug('all_gen_vid_idx: ', all_gen_vid_idx)
 
         # Find up to max_num_rest [AUD] tokens, and their corresponding scores.
         all_gen_aud_idx = [i for i, x in enumerate(generated_ids[0, :] == self.args['model_config']['gen_audio_token_idx'][0]) if x][
                           :inputs['max_num_auds']]
-        print('all_gen_aud_idx: ', all_gen_aud_idx)
+        bt.logging.debug('all_gen_aud_idx: ', all_gen_aud_idx)
 
         if len(all_gen_img_idx) == 0 and len(all_gen_vid_idx) == 0 and len(all_gen_aud_idx) == 0:
             # No [IMG], [VID], [AUD] tokens.

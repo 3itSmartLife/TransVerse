@@ -16,7 +16,6 @@ def load_distributed_dataset(args):
 
     """
     # concat_data = get_concat_dataset(dataset_name_list)
-    print('### DEBUG ### %s'%args.model_config['dataset_name_list'])
     concat_data = MyConcatDataset(args.model_config['dataset_name_list'])
     world_size = torch.distributed.get_world_size()
     rank = torch.distributed.get_rank()
