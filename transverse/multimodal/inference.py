@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     g_cuda = torch.Generator(device='cuda').manual_seed(1337)
     args = {'model': 'nextgpt',
-            'nextgpt_ckpt_path': '../ckpt/delta_ckpt/nextgpt/7b_tiva_v0/',
+            'nextgpt_ckpt_path': './ckpt/delta_ckpt/nextgpt/7b_tiva_v0/',
             'max_length': 128,
             'stage': 3,
             'root_dir': '../',

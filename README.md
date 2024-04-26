@@ -8,6 +8,11 @@ By leveraging the unlimited power of decentralized distributed compute resource,
 # Running miners and validators
 ## Preparation
 
+### Install requirements
+```
+pip install -e .
+```
+
 ### Load pretrained model checkpoint from HuggingFace
 Create a ckpt dir
 ```
@@ -21,21 +26,17 @@ mkdir ckpt/pretrained_ckpt/vicuna_ckpt/7b_v0
 ```
 
 Download ImageBind checkpoint
-```<bash>
+```
 wget -P ./ckpt/pretrained_ckpt/imagebind_ckpt/huge https://dl.fbaipublicfiles.com/imagebind/imagebind_huge.pth
 ```
 
-huggingface-cli download lmsys/vicuna-7b-v1.5 --local-dir ckpt/pretrained_ckpt/vicuna_ckpt/7b_v0
 
 Download checkpoints from huggingface repository
 ```
+huggingface-cli download lmsys/vicuna-7b-v1.5 --local-dir ckpt/pretrained_ckpt/vicuna_ckpt/7b_v0
 huggingface-cli download 3it/TransVerse-v1 --local-dir ckpt/pretrained_ckpt/7b_tiva_v0
 ```
 
-### Install requirements
-```
-pip install -e .
-```
 
 ## Running a miner
 deepspeed --include localhost:0 --master_addr 127.0.0.1 --master_port 28459 neurons/miner.py --subtensor.network test --wallet.name tw --wallet.hotkey tw-h3 --netuid 74 --axon.port 2012 --logging.debug --logging.trace
@@ -45,6 +46,8 @@ deepspeed --include localhost:0 --master_addr 127.0.0.1 --master_port 28459 neur
 
 Follow the instructions to prepare for dataset
 ### Image Data preparation
+mkdir data
+cd data
 huggingface-cli download 3it/TransVerse-Image-Zip --local-dir ./ --repo-type dataset
 unzip cc3m.zip
 rm cc3m.zip
