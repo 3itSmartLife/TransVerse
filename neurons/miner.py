@@ -25,6 +25,8 @@ import json
 import os
 import deepspeed
 import gc
+import logging
+logging.basicConfig(level=logging.INFO)
 
 # Bittensor Miner :
 import transverse
@@ -34,6 +36,7 @@ from transverse.base.miner import BaseMinerNeuron
 from transverse.multimodal.model.agent import DeepSpeedAgent
 from transverse.multimodal.model.anyToImageVideoAudio import TransVerseModel
 from transverse.multimodal.config import load_config
+
 
 
 class Miner(BaseMinerNeuron):

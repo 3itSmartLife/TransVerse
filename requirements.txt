@@ -29,7 +29,7 @@ tqdm==4.65.0
 transformers==4.29.2
 omegaconf==2.3.0
 tensorboard==2.13.0
-loguru
+loguru==0.7.0
 bittensor
 openai
 tiktoken

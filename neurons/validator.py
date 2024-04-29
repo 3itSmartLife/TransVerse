@@ -23,6 +23,8 @@ import torch
 import json
 import os
 import deepspeed
+import logging
+logging.basicConfig(level=logging.INFO)
 
 # Bittensor
 import bittensor as bt

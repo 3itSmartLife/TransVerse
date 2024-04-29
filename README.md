@@ -37,6 +37,29 @@ huggingface-cli download lmsys/vicuna-7b-v1.5 --local-dir ckpt/pretrained_ckpt/v
 huggingface-cli download 3it/TransVerse-v1 --local-dir ckpt/pretrained_ckpt/7b_tiva_v0
 ```
 
+## Data Preparation
+Simply run the `data_prep.sh` or follow the instructions to prepare for dataset
+### Image Data preparation
+mkdir data
+mkdir data/T-X_pair_data
+cd data/T-X_pair_data
+huggingface-cli download 3it/TransVerse-Image-Zip --local-dir ./ --repo-type dataset
+unzip cc3m.zip
+rm -rf ~/.cache/huggingface/hub/datasets--3it--TransVerse-Image-Zip
+rm cc3m.zip
+
+### Video Data preparation
+huggingface-cli download 3it/TransVerse-Video-Zip --local-dir ./ --repo-type dataset
+unzip webvid.zip
+rm -rf ~/.cache/huggingface/hub/datasets--3it--TransVerse-Video-Zip
+rm webvid.zip
+
+### Audio Data preparation
+huggingface-cli download 3it/TransVerse-Audio-Zip --local-dir ./ --repo-type dataset
+unzip audiocap.zip
+rm -rf ~/.cache/huggingface/hub/datasets--3it--TransVerse-Audio-Zip
+rm audiocap.zip
+
 
 ## Running a miner
 deepspeed --include localhost:0 --master_addr 127.0.0.1 --master_port 28459 neurons/miner.py --subtensor.network test --wallet.name tw --wallet.hotkey tw-h3 --netuid 74 --axon.port 2012 --logging.debug --logging.trace
@@ -44,23 +67,12 @@ deepspeed --include localhost:0 --master_addr 127.0.0.1 --master_port 28459 neur
 
 ## Running a validator
 
-Follow the instructions to prepare for dataset
-### Image Data preparation
-mkdir data
-cd data
-huggingface-cli download 3it/TransVerse-Image-Zip --local-dir ./ --repo-type dataset
-unzip cc3m.zip
-rm cc3m.zip
+## FAQ
+Running on runpod
+apt update
+apt install unzip
 
-### Video Data preparation
-huggingface-cli download 3it/TransVerse-Video-Zip --local-dir ./ --repo-type dataset
-unzip webvid.zip
-rm webvid.zip
 
-### Audio Data preparation
-huggingface-cli download 3it/TransVerse-Audio-Zip --local-dir ./ --repo-type dataset
-unzip audiocap.zip
-rm audiocap-full.zip
 
 # Roadmap
 - Build decentralized distributed training network to train the any-to-any multimodal model
