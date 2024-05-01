@@ -5,9 +5,13 @@
 
 # Table of Contents
 [Introduction](#introduction)
+
 [Key Features](#key-features)
+
 [Roadmap](#roadmap)
+
 [Running miners and validators](#running-miners-and-validators)
+
 [FAQ](#faq)
 
 ## Introduction
