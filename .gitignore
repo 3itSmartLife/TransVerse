@@ -1,5 +1,5 @@
 validators/state.json
-bittensor_subnet_template.egg-info/
+TransVerse.egg-info/
 template/__pycache__/
 __pycache__/
 *.pyc
