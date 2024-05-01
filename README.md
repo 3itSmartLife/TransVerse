@@ -32,7 +32,7 @@ alt="Brief structure of Distributed Training"
 style="
 padding-left: 5% !important; 
 width: 90%;
-height: 90%;" />
+" />
 
 Miners are responsible for receiving training batches and compute gradients on the model.
 Validators receive those gradients as responses from miners and validate whether miners are computing gradients correctly or not.
@@ -43,7 +43,7 @@ alt="Brief structure of Distributed Training"
 style="
 padding-left: 5% !important; 
 width: 90%;
-height: 90%;" />
+" />
 
 ## Key Features
 - Cross-modality(Text, Image, Video, Audio to Text, Image, Video, and Audio)
