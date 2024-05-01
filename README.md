@@ -30,8 +30,7 @@ Involving high-performance encoders and decoders benefits not only to enhance th
 <img src="docs/imgs/model-structure.png"
 alt="Brief structure of Distributed Training"
 style="
-padding-left: 5%; 
-margin: auto;
+padding-left: 5% !important; 
 width: 90%;
 height: 90%;" />
 
@@ -42,8 +41,7 @@ The model server is responsible for aggregating gradients from miners and propag
 <img src="docs/imgs/distributed-training.png"
 alt="Brief structure of Distributed Training"
 style="
-padding-left: 5%; 
-margin: auto;
+padding-left: 5% !important; 
 width: 90%;
 height: 90%;" />
 
