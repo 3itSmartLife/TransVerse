@@ -59,7 +59,7 @@ height: 90%;" />
 ## Incentive Mechanism
 Currently, miners are rewarded based on how accurately they computed gradients.\
 Multi-GPU performance consideration is being involved in the incentive mechanism.
-Multi-GPU training is already implemented and miners with bigger computing capacity will be rewarded much more.
+Multi-GPU training is already implemented and planning to reward miners with bigger computing capacity much more exponentially.
 This will help reduce the traffic while enhancing the computing capacity of the subnet.
 
 ## Roadmap
