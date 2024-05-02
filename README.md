@@ -93,11 +93,13 @@ mkdir ckpt/pretrained_ckpt/imagebind_ckpt/huge
 mkdir ckpt/pretrained_ckpt/7b_tiva_v0
 mkdir ckpt/pretrained_ckpt/vicuna_ckpt/
 mkdir ckpt/pretrained_ckpt/vicuna_ckpt/7b_v0
+
 ```
 
 Download the ImageBind checkpoint
 ```
 wget -P ./ckpt/pretrained_ckpt/imagebind_ckpt/huge https://dl.fbaipublicfiles.com/imagebind/imagebind_huge.pth
+
 ```
 
 
@@ -105,6 +107,7 @@ Download checkpoints from huggingface repository
 ```
 huggingface-cli download lmsys/vicuna-7b-v1.5 --local-dir ckpt/pretrained_ckpt/vicuna_ckpt/7b_v0
 huggingface-cli download 3it/TransVerse-v1 --local-dir ckpt/pretrained_ckpt/7b_tiva_v0
+
 ```
 
 ### Data Preparation
@@ -120,6 +123,7 @@ huggingface-cli download 3it/TransVerse-Image-Zip --local-dir ./ --repo-type dat
 unzip cc3m.zip
 rm -rf ~/.cache/huggingface/hub/datasets--3it--TransVerse-Image-Zip
 rm cc3m.zip
+
 ```
 #### Video Data preparation
 ```
@@ -127,6 +131,7 @@ huggingface-cli download 3it/TransVerse-Video-Zip --local-dir ./ --repo-type dat
 unzip webvid.zip
 rm -rf ~/.cache/huggingface/hub/datasets--3it--TransVerse-Video-Zip
 rm webvid.zip
+
 ```
 #### Audio Data preparation
 ```
@@ -134,6 +139,7 @@ huggingface-cli download 3it/TransVerse-Audio-Zip --local-dir ./ --repo-type dat
 unzip audiocap.zip
 rm -rf ~/.cache/huggingface/hub/datasets--3it--TransVerse-Audio-Zip
 rm audiocap.zip
+
 ```
 
 ### Running a miner
