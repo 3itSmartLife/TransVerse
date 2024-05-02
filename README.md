@@ -1,5 +1,4 @@
-# TRANSVERSE: An any-to-any MultiModal subnet
-
+<h1 style="font-size:30px; text-align:center"> TRANSVERSE: An any-to-any MultiModal subnet </p>
 
 
 
@@ -15,17 +14,19 @@
 [FAQ](#faq)
 
 ## Introduction
-TransVerse is an any-to-any multimodal model subnet that aims to build the AGI(Artificial General Intelligence) through decentralized distributed ecosystem in Bittensor\
-Building AGI is the holy grail of Artificial Intelligence but it contains potential threats against humankind
-AGI built on truely decentralized distributed AI platforms like Bittensor is the only solution to guide the AGI serve for mankind.
-By leveraging the unlimited power of incentivized distributed compute resource, TransVerse will be able to build a powerful decentralized democratized AGI competing against centralized AIs.
+TransVerse is an any-to-any multimodal model subnet that aims to contribute to the development of AGI(Artificial General Intelligence) through decentralized distributed network in Bittensor ecosystem\
+The pursuit of AGI, often referred to as the 'holy grail' of Artificial Intelligence, carries both immense potential and significant challenges in ensuring the alignment of such a powerful system with the well-being of humanity.
+Harnessing the unlimited power of incentivized distributed compute resources, TransVerse aspires to build a robust, decentralized, and democratized AGI capable of competing with centralized AI systems.
 
 TransVerse model is the combination of LLM, Image Encoder and Decoder, Video Encoder and Decoder, Audio Encoder and Decoder.
-Each modality is encoded into their own representations and projected to the main LLM.
-Then the LLM converts the encoded representation to target modality representations following text prompts and these representations are decoded to target modality.
-TransVerse model training is done by training the projection layers of each modality while freezing the LLM, encoders, and decoders of each modality.
-Involving high-performance encoders and decoders benefits not only to enhance the performance of conversion results but also reduces the training scale, making is easier to add extra modality models with minimum effort.
-
+Each modality input is encoded into their own representations, which are then projected to the main LLM.
+The LLM acts as the central hub, converting the encoded representations into target modality ones based on text prompts and
+These representations are then decoded to the target modality.
+The training of TransVerse model is done by training the projection layers of each modality while freezing the LLM, encoders, and decoders of each modality.
+This approach offers several benefits:
+- Enhanced performance: The use of high-performance encoders and decoders not only improves the quality of the conversion results but also reduces teh overall training scale, making it easier to add additional modalities with minimal effort.
+- Scalability: By segregating the modality-specific components (encoders and decoders) from the central LLM, the TransVerse model can be easily expanded to support new modalities without the need to retrain the entire system from scratch.
+- Efficient training: The selective training of the projection layers, while keeping the core modality-specific components frozen, significantly reduces the training complexity and resources required, making the model more accessible and easier to deploy.
 
 <img src="docs/imgs/model-structure.png"
 alt="Brief structure of Distributed Training"
@@ -34,9 +35,22 @@ width: 90%;
 padding-left: 5%; 
 " />
 
-Miners are responsible for receiving training batches and compute gradients on the model.
-Validators receive those gradients as responses from miners and validate whether miners are computing gradients correctly or not.
-The model server is responsible for aggregating gradients from miners and propagate averaged gradients to the whole system so that miners and validators would be able to update their model
+
+Here comes the brief structure of the subnet.
+
+Miners:
+- Miners are responsible for receiving training batches from the system.
+- They compute the gradients on the model based on the received training data.
+- Miners then send these computed gradients as responses back to the network.
+
+Validators:
+- Validators receive the gradient responses from the miners.
+- They validate whether the miners are computing the gradients correctly.
+- The validators play a crucial role in ensuring the integrity and reliability of the training process.
+
+Model Server:
+- The model server is responsible for aggregating the gradients received from the miners.
+- It then propagates the averaged gradients back to the entire system to let miners and validators update their model.
 
 <img src="docs/imgs/distributed-training.png"
 alt="Brief structure of Distributed Training"
@@ -46,19 +60,13 @@ padding-left: 5%;
 " />
 
 ## Key Features
-- Cross-modality(Text, Image, Video, Audio to Text, Image, Video, and Audio)
+- Cross-modality Capacity(Text, Image, Video, Audio to Text, Image, Video, and Audio)
 
 - Parameter efficient distributed training through incentivied Bittensor ecosystem
 
-- Combination of high-performing models in each modality
+- Combination of high-performing modality-specific models
 
-- Extendable to any modality
-
-## Incentive Mechanism
-Currently, miners are rewarded based on how accurately they computed gradients.\
-Multi-GPU performance consideration is being involved in the incentive mechanism.
-Multi-GPU training is already implemented and planning to reward miners with bigger computing capacity much more exponentially.
-This will help reduce the traffic while enhancing the computing capacity of the subnet.
+- Extendability to additional modalities
 
 ## Roadmap
 - Build incentivized distributed training network to train the any-to-any multimodal model
