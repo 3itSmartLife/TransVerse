@@ -338,8 +338,8 @@ class Miner(BaseMinerNeuron):
 if __name__ == "__main__":
     with Miner() as miner:
         bt.logging.info("Running miner on subnet %d"%miner.config.netuid)
+        last_block = 0
         while True:
-            last_block = 0
             if miner.block % 5 == 0 and miner.block > last_block:
                 log = (
                     f"Block: {miner.block} | " +
