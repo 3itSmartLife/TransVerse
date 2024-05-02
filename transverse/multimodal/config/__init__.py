@@ -1,10 +1,10 @@
 import yaml
-
+import bittensor as bt
 
 def load_model_config(stage, mode):
     # load special config for each model
     config_path = f'transverse/multimodal/config/stage_{stage}.yaml'
-    print(f'[!] load configuration from {config_path}')
+    bt.logging.info(f'[!] load configuration from {config_path}')
     with open(config_path) as f:
         configuration = yaml.load(f, Loader=yaml.FullLoader)
         new_config = {}
@@ -37,5 +37,5 @@ def load_base_config():
     config_path = f'transverse/multimodal/config/base.yaml'
     with open(config_path) as f:
         configuration = yaml.load(f, Loader=yaml.FullLoader)
-    print(f'[!] load base configuration: {config_path}')
+    bt.logging.info(f'[!] Loading base configuration: {config_path}')
     return configuration

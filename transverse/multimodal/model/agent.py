@@ -15,6 +15,8 @@ from collections import OrderedDict
 import json
 import logging
 from torch.utils.tensorboard import SummaryWriter
+import bittensor as bt
+import gc
 
 # from transverse.multimodal.header import *
 
@@ -32,14 +34,19 @@ class DeepSpeedAgent:
         self.load_parameters(self.args['save_path'], self.args['stage'])
         
         # load config parameters of deepspeed
-        self.args.ds_config['scheduler']['params']['total_num_steps'] = self.args['total_steps']
+        ds_params = json.load(open(self.args['ds_config_path']))
+        ds_params['scheduler']['params']['total_num_steps'] = self.args['total_steps']
+        self.ds_params = ds_params
+
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=ds_params['optimizer']['params']['lr'])
+
         # TODO: Add warmup step 
         # ds_params['scheduler']['params']['warmup_num_steps'] = max(10, int(self.args['total_steps'] * self.args['model_config']['warmup_rate']))
-        self.args.ds_config['scheduler']['params']['warmup_num_steps'] = 0
-        self.ds_engine, self.optimizer, _, _ = deepspeed.initialize(
+        ds_params['scheduler']['params']['warmup_num_steps'] = 0
+        self.ds_engine, _, _, _ = deepspeed.initialize(
             model=self.model,
             model_parameters=self.model.parameters(),
-            config_params=self.args.ds_config,
+            config_params=ds_params,
             dist_init_required=True,
             args=types.SimpleNamespace(**args)
         )
@@ -50,10 +57,22 @@ class DeepSpeedAgent:
         output = self.ds_engine.generate(self.args)
         return output
 
-    def train_model(self, batch, current_step=0, pbar=None):
+    def compute_grad(self, batch, current_step=0, pbar=None):
+        # Calculate the loss and backpropagate it
         self.ds_engine.module.train()
-
         loss, mle_acc, mse_loss = self.ds_engine(batch)
+        self.ds_engine.backward(loss)
+        gradients = []
+
+        for param in self.ds_engine.module.parameters():
+            if param.requires_grad:
+                grad_data = deepspeed.utils.safe_get_full_grad(param)
+                gradients.append(grad_data.clone())
+                
+        self.optimizer.zero_grad()
+        
+        # Print loss and accuracy
+        bt.logging.info(f'Training Step: {current_step}, Loss: {loss.item()}, Accuracy: {mle_acc}')
 
         self.writer.add_scalar('loss', loss, current_step)
         self.writer.add_scalar('mle_acc', mle_acc, current_step)
@@ -65,23 +84,30 @@ class DeepSpeedAgent:
             self.writer.add_scalar('mse_loss', mse_loss, current_step)
         else:
             pass
-        # self.writer.add_scalar('mse_loss', mse_loss, current_step)
 
-        self.ds_engine.backward(loss)
-        self.ds_engine.step()
-        # pbar.set_description(f'[!] loss: {round(loss.item(), 4)}; token_acc: {round(mle_acc * 100, 2)}; mse_loss: {round(mse_loss[0].item(), 4)} ')
-        pbar.set_description(f'[!] loss: {round(loss.item(), 4)}; token_acc: {round(mle_acc * 100, 2)}')
-        pbar.update(1)
-        if self.args['local_rank'] == 0 and self.args['log_path'] and current_step % self.args['logging_step'] == 0:
-            elapsed = pbar.format_dict['elapsed']
-            rate = pbar.format_dict['rate']
-            remaining = (pbar.total - pbar.n) / rate if rate and pbar.total else 0
-            remaining = str(datetime.timedelta(seconds=remaining))
-            logging.info(
-                f'[!] progress: {round(pbar.n / pbar.total, 5)}; remaining time: {remaining}; loss: {round(loss.item(), 4)}; token_acc: {round(mle_acc * 100, 2)}')
-            # ; mse_loss: {round(mse_loss[0].item(), 4)}
-        mle_acc *= 100
-        return mle_acc
+        # try:
+        #     gc.collect()
+        #     torch.cuda.empty_cache()
+        # except:
+        #     pass
+
+        return gradients
+
+    def update_model(self, gradients):
+        with torch.no_grad():
+            for param, grad in zip(self.model.parameters(), gradients):
+                if param.requires_grad:
+                    param.data.sub_(grad * self.ds_params['optimizer']['params']['lr'])
+        self.optimizer.zero_grad()
+
+        # try:
+        #     gc.collect()
+        #     torch.cuda.empty_cache()
+        # except:
+        #     pass
+
+        return True
+
 
     def save_model(self, path, current_step):
         """
@@ -108,12 +134,12 @@ class DeepSpeedAgent:
         self.model.llama_tokenizer.save_pretrained(path)
         # save configuration
         self.model.llama_model.config.save_pretrained(path)
-        print(f'[!] save model into {path}')
+        bt.logging.info(f'[!] Saving model into {path}')
 
     def print_model_parameters(self, use_4bit=False):
         """
             Prints the number of trainable parameters in the model.
-            """
+        """
         trainable_params = 0
         all_param = 0
         lora = 0
@@ -151,15 +177,17 @@ class DeepSpeedAgent:
                 trainable_params += num_params
         if use_4bit:
             trainable_params /= 2
+        print('################################################################################################')
         print(
             f"all params: {all_param:,d} || trainable params: {trainable_params:,d} || trainable%: {100 * trainable_params / all_param}"
         )
         print(f'lora params: {lora:,d} || video params: {video:,d} || audio params: {audio:,d} || image params: {image:,d}')
         print(f'linear params: {linear:,d} || imagebind params: {imagebind:,d} || llama params: {llama:,d}')
+        print('################################################################################################')
 
     def load_parameters(self, path, stage=3):
         if os.path.exists(os.path.join(path, 'pytorch_model.pt')):
-            print('loading parameters from {}'.format(self.args['save_path']))
+            bt.logging.info('Loading parameters from {}'.format(self.args['save_path']))
             delta_ckpt = torch.load(f'{path}/pytorch_model.pt', map_location=torch.device('cuda'))
             checkpoint = OrderedDict()
             if stage == 3:
@@ -173,4 +201,3 @@ class DeepSpeedAgent:
             else:
                 checkpoint = delta_ckpt
             self.model.load_state_dict(checkpoint, strict=False)
-

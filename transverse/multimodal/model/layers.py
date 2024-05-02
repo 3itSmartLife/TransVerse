@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from .qformer import BertLMHeadModel, BertConfig
-# from header import *
+import bittensor as bt
 
 class TextFcLayer(nn.Module):
     """Layers used in mapping text embeddings to visual outputs."""
@@ -48,7 +48,7 @@ class TextFcLayer(nn.Module):
             self.query_embs = nn.Parameter(torch.randn(1, num_output_tokens, hidden_dim))
         elif mode == 'qformer':
             # raise NotImplementedError(mode)  # TODO: ADD Q-former FOR MAPPING LAYER
-            print('Loading Q-Former')
+            bt.logging.debug('Loading Q-Former')
             hidden_dim = 768
             self.fc = nn.Linear(in_dim, hidden_dim)
             self.Qformer, self.query_tokens = self.init_Qformer(
@@ -69,7 +69,7 @@ class TextFcLayer(nn.Module):
             #     # self.Qformer.train = disabled_train
             #     self.query_tokens.requires_grad = False
             #     # logging.info("freeze Qformer")
-            print('Loading Q-Former Done')
+            bt.logging.debug('Loading Q-Former Done')
 
         else:
             raise NotImplementedError(mode)

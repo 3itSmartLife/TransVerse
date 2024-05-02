@@ -24,15 +24,19 @@ import torch
 import json
 import os
 import deepspeed
+import gc
+import logging
+logging.basicConfig(level=logging.INFO)
 
 # Bittensor Miner :
 import transverse
 
 # import base miner class which takes care of most of the boilerplate
 from transverse.base.miner import BaseMinerNeuron
-from transverse.multimodal.model.agent_grad import DeepSpeedAgent
+from transverse.multimodal.model.agent import DeepSpeedAgent
 from transverse.multimodal.model.anyToImageVideoAudio import TransVerseModel
 from transverse.multimodal.config import load_config
+
 
 
 class Miner(BaseMinerNeuron):
@@ -63,10 +67,10 @@ class Miner(BaseMinerNeuron):
 
         # TODO: Sync with trained model (Can be done in version 2)
         self.model = TransVerseModel(**self.config)
-        self.agent = DeepSpeedAgent(self.model, self.config)
-        delta_ckpt = torch.load('ckpt/delta_ckpt/7b_tiva_v0/pytorch_model.pt', map_location=torch.device('cpu'))
-        bt.logging.info('Loaded the pretrained checkpoint')
+        delta_ckpt = torch.load('ckpt/pretrained_ckpt/7b_tiva_v0/pytorch_model.pt', map_location=torch.device('cpu'))
         self.model.load_state_dict(delta_ckpt, strict=False)
+        bt.logging.info('Loaded the pretrained checkpoint successfully')
+        self.agent = DeepSpeedAgent(self.model, self.config)
 
         # TODO: Attach determiners which functions are called when receiving a request
         self.axon = bt.axon(wallet=self.wallet, port=self.config.axon.port)
@@ -106,6 +110,13 @@ class Miner(BaseMinerNeuron):
         synapse.gradients = [bt.Tensor.serialize(grad) for grad in gradients]
         bt.logging.info(f'Calculated gradients in {time.time() - stime}s')
 
+        # Collecting garbage
+        # try:
+        #     gc.collect()
+        #     torch.cuda.empty_cache()
+        # except:
+        #     pass
+
         return synapse
 
     async def update_model(
@@ -130,6 +141,13 @@ class Miner(BaseMinerNeuron):
         synapse.updated = self.agent.update_model(avg_grads)
         synapse.updated = True
         bt.logging.info(f'Model updated using propagated gradients in {time.time() - start_time}s')
+
+        # Collecting garbage
+        # try:
+        #     gc.collect()
+        #     torch.cuda.empty_cache()
+        # except:
+        #     pass
 
         return synapse
 

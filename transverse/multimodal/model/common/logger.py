@@ -12,6 +12,7 @@ from collections import defaultdict, deque
 
 import torch
 import torch.distributed as dist
+import bittensor as bt
 
 from . import dist_utils
 
@@ -148,7 +149,7 @@ class MetricLogger(object):
                 eta_seconds = iter_time.global_avg * (len(iterable) - i)
                 eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
                 if torch.cuda.is_available():
-                    print(
+                    bt.logging.debug(
                         log_msg.format(
                             i,
                             len(iterable),
@@ -160,7 +161,7 @@ class MetricLogger(object):
                         )
                     )
                 else:
-                    print(
+                    bt.logging.debug(
                         log_msg.format(
                             i,
                             len(iterable),

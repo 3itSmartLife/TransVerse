@@ -40,7 +40,7 @@ class AudioCapDataset(BaseDataset):
         super(AudioCapDataset, self).__init__(data_path, mm_root_path, embed_path, dataset_type)
         self.embed_path = embed_path
 
-        print('Load Audiocap dataset ...')
+        print('Loading audio dataset ...')
         self.mm_path_list, self.caption_list = [], []
         with open(data_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
