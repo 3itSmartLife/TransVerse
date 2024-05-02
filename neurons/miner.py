@@ -26,7 +26,7 @@ import os
 import deepspeed
 import gc
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 # Bittensor Miner :
 import transverse

@@ -24,7 +24,7 @@ import json
 import os
 import deepspeed
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 # Bittensor
 import bittensor as bt
